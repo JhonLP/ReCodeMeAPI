@@ -7,14 +7,13 @@ var _ = require('lodash');
 /**
  * Local
  */
-var db = {};
 var Nota = require('./model');
 
 /**
  * Verbos
  */
 
- app.get('/notas', function(req, res) {
+ api.get('/notas', function(req, res) {
 
    Nota.find({}).exec()
      .then(function(notas) {
@@ -31,7 +30,7 @@ var Nota = require('./model');
          });
      }, function(err) {
          console.log('err', err);
-     })
+     });
  });
 
 api.route('/notas/:id?')
@@ -39,7 +38,7 @@ api.route('/notas/:id?')
   .all(function(req, res, next) {
     res.set('Content-Type','apilication/json');
     next();
-  })
+})
 
   // POST
   .post(function(req, res) {
@@ -78,36 +77,39 @@ api.route('/notas/:id?')
 
       res.json({
         notas: nota
-      })
+        });
     });
 
-  })
+})
 
   // PUT
   .put(function(req, res, next) {
     var id = req.params.id;
-    var notaActualizada = req.body.nota;
 
     if (!id) {
       return next();
     }
 
-    Nota.update({_id:id}, notaActualizada, function(err, nota, results) {
-      console.log(arguments);
+    Nota.findById(id, function(err, nota) {
       // response
-      if (results.ok) {
-       return res
-          .json({
-            nota: [notaActualizada]
-          });
+      if (err) {
+          res.status(500)
+          .send(err);
       }
-      res
-        .status(500)
-        .send(err);
 
-    });
+      nota.title = req.body.nota.title;
+      nota.description = req.body.nota.description;
+      nota.body = req.body.nota.body;
+      nota.save(function(err){
+          if(err){
+              res.send(err);
+          }
+          res.json({message:'Nota Actualizada'});
+      });
 
-  })
+    })
+
+})
 
   // DELETE
   .delete(function(req, res) {
